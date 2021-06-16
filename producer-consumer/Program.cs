@@ -52,23 +52,24 @@ namespace producer_consumer
 
         public T Get_Task()
         {
-            if (!IsEmpty())
+            if (IsEmpty())
             {
-                queueLock.WaitOne();
-                T task;
-                try
-                {
-                    task = queue[0];
-                    queue.RemoveAt(0);
-                }
-                finally
-                {
-                    queueLock.ReleaseMutex();
-                }
-                return task;
+                throw new Exception();
             }
 
-            return default(T);
+            queueLock.WaitOne();
+            T task;
+            try
+            {
+                task = queue[0];
+                queue.RemoveAt(0);
+            }
+            finally
+            {
+                queueLock.ReleaseMutex();
+            }
+
+            return task;
         }
     }
 
@@ -103,9 +104,13 @@ namespace producer_consumer
             {
                 if (!_cooldown || _TaskQueue.IsEmpty())
                 {
-                    _store = _TaskQueue.Get_Task();
-                    _cooldown = true;
-                    Console.WriteLine(_store);
+                    try
+                    {
+                        _store = _TaskQueue.Get_Task();
+                        _cooldown = true;
+                        Console.WriteLine(_store);
+                    }
+                    catch (Exception e) { }
                 }
                 else
                 {
@@ -149,7 +154,7 @@ namespace producer_consumer
 
     class Program
     {
-        const int pCount = 5, cCount = 3;
+        const int pCount = 3, cCount = 5;
 
         static string func ()
         {
